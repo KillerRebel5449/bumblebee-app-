@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bumblebee Friend</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090b0f;color:#fff;font-family:system-ui,-apple-system,sans-serif}
+.app{max-width:900px;margin:auto;padding:14px;text-align:center}h1{color:#ffd21c;margin:8px 0}.sub{color:#aeb4bd}
+.stage{position:relative;min-height:430px;margin-top:14px;border-radius:20px;overflow:hidden;background:linear-gradient(#d9d9d9,#888);display:grid;place-items:center}
+.bee{width:260px;height:330px;position:relative;transition:.3s}.head{position:absolute;left:55px;top:10px;width:150px;height:110px;background:#ffc400;border:8px solid #171717;border-radius:45% 45% 38% 38%;box-shadow:inset 0 -12px #222}
+.eye{position:absolute;top:38px;width:38px;height:28px;background:#eaf6ff;border:5px solid #171717;border-radius:50%}.eye.l{left:28px}.eye.r{right:28px}
+.body{position:absolute;left:35px;top:105px;width:190px;height:190px;background:#ffc400;border:8px solid #171717;border-radius:35px;box-shadow:inset 0 35px #222,inset 0 78px #ffc400,inset 0 118px #222}
+.arm{position:absolute;top:125px;width:45px;height:130px;background:#ffc400;border:8px solid #171717;border-radius:25px}.arm.l{left:0;transform:rotate(12deg)}.arm.r{right:0;transform:rotate(-12deg)}
+.leg{position:absolute;top:270px;width:55px;height:75px;background:#ffc400;border:8px solid #171717;border-radius:20px}.leg.l{left:65px}.leg.r{right:65px}
+.bubble{position:absolute;z-index:3;top:12px;left:5%;width:90%;background:#111d;border-radius:14px;padding:12px;font-size:18px}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center}input{flex:1;min-width:210px;background:#17191d;color:#fff;border:1px solid #666;border-radius:12px;padding:14px;font-size:16px}button{border:0;border-radius:12px;padding:14px 16px;font-weight:800;font-size:15px;min-height:48px;background:#ffd21c;color:#111}button.secondary{background:#333;color:#fff;border:1px solid #666}button.mic{width:min(560px,100%);font-size:21px;padding:19px}button.listening{background:#d92f2f;color:#fff;animation:pulse 1s infinite}@keyframes pulse{50%{transform:scale(1.02)}}.talking{animation:talk .16s infinite alternate}@keyframes talk{to{transform:scale(1.02) translateY(-2px)}}.bounce{animation:bounce .55s ease-in-out 2}@keyframes bounce{50%{transform:translateY(-18px)}}.left{animation:left .7s}@keyframes left{50%{transform:translateX(-20px) rotate(-2deg)}}.right{animation:right .7s}@keyframes right{50%{transform:translateX(20px) rotate(2deg)}}.note{color:#aeb4bd;font-size:12px;max-width:760px;margin:8px auto}
+</style>
+</head>
+<body><main class="app">
+<h1>🐝 Bumblebee Friend</h1><div class="sub">Talk, type, hear replies, and make Bumblebee move.</div>
+<div class="stage"><div id="bubble" class="bubble">"Hey! I'm ready. Talk to me or type a message."</div>
+<div id="bee" class="bee" aria-label="Bumblebee robot"><div class="head"><div class="eye l"></div><div class="eye r"></div></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div><div class="leg l"></div><div class="leg r"></div></div></div>
+<button id="mic" class="mic" style="margin-top:12px">🎙️ Tap to Talk</button>
+<div class="row"><input id="text" placeholder="Type a message to Bumblebee…"><button id="send">Send</button></div>
+<div class="row"><button class="secondary" onclick="move('left')">⬅️ Move</button><button class="secondary" onclick="move('bounce')">⬆️ Jump</button><button class="secondary" onclick="move('right')">Move ➡️</button><button class="secondary" onclick="getLocation()">📍 Share location</button></div>
+<div id="status" class="note">Microphone works best on an HTTPS website.</div><div id="loc" class="note"></div>
+</main>
+<script>
+const bubble=document.getElementById('bubble'),bee=document.getElementById('bee'),mic=document.getElementById('mic'),input=document.getElementById('text'),status=document.getElementById('status'),loc=document.getElementById('loc');
+function say(text){bubble.textContent='“'+text+'”';if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.pitch=.65;u.rate=.9;u.onstart=()=>bee.classList.add('talking');u.onend=()=>bee.classList.remove('talking');speechSynthesis.speak(u)}}
+function reply(t){const s=t.toLowerCase();let r;if(s.includes('hello')||s.includes('hi'))r='Hey! Good to hear from you.';else if(s.includes('move')||s.includes('dance')){r='Movement systems online!';move('left');setTimeout(()=>move('right'),800)}else if(s.includes('jump')){r='Jumping!';move('bounce')}else if(s.includes('location'))r='You can choose whether to share your location with me.';else r='I hear you. My radio systems are online and ready.';say(r)}
+function send(){const t=input.value.trim();if(!t)return;reply(t);input.value=''}document.getElementById('send').onclick=send;input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+function move(c){bee.classList.remove('left','right','bounce');void bee.offsetWidth;bee.classList.add(c);setTimeout(()=>bee.classList.remove(c),1500)}
+function getLocation(){if(!navigator.geolocation){loc.textContent='Location is not available in this browser.';return}loc.textContent='Asking for location permission…';navigator.geolocation.getCurrentPosition(p=>{loc.textContent='Location permission granted. Bumblebee can use your approximate coordinates while this page is open: '+p.coords.latitude.toFixed(3)+', '+p.coords.longitude.toFixed(3)},()=>loc.textContent='Location was not shared. You stay in control.')}
+
+let recognition;const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){mic.disabled=true;mic.textContent='🎙️ Voice input unavailable here';status.textContent='Your browser does not provide speech recognition.'}
+else{recognition=new SR();recognition.lang='en-GB';recognition.interimResults=false;recognition.continuous=false;
+recognition.onstart=()=>{mic.textContent='🔴 Listening…';mic.classList.add('listening');status.textContent='Listening for your voice…'};
+recognition.onend=()=>{mic.textContent='🎙️ Tap to Talk';mic.classList.remove('listening');status.textContent='Ready.'};
+recognition.onerror=e=>{mic.textContent='🎙️ Tap to Talk';mic.classList.remove('listening');status.textContent='Microphone error: '+e.error+'. If permission is blocked, allow microphone access for this HTTPS site.'};
+recognition.onresult=e=>reply(e.results[0][0].transcript);
+mic.onclick=()=>{try{recognition.start()}catch(e){}}
+}
+</script></body></html>
